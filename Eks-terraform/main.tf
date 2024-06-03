@@ -25,28 +25,28 @@ resource "aws_iam_role_policy_attachment" "example-AmazonEKSClusterPolicy" {
 data "aws_vpc" "vpc" {
   filter {
     name   = "tag:Name"
-    values = [var.vpc-name]
+    values = [Jenkins-vpc]
   }
 }
 
 data "aws_internet_gateway" "igw" {
   filter {
     name   = "tag:Name"
-    values = [var.igw-name]
+    values = [Jenkins-igw]
   }
 }
 
 data "aws_subnet" "subnet" {
   filter {
     name   = "tag:Name"
-    values = [var.subnet-name]
+    values = [Jenkins-subnet]
   }
 }
 
 data "aws_security_group" "sg-default" {
   filter {
     name   = "tag:Name"
-    values = [var.security-group-name]
+    values = [Jenkins-sg]
   }
 }
 
@@ -57,7 +57,7 @@ resource "aws_subnet" "public-subnet2" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name = var.subnet-name2
+    Name = Jenkins-subnet2
   }
 }
 
@@ -69,7 +69,7 @@ resource "aws_route_table" "rt2" {
   }
 
   tags = {
-    Name = var.rt-name2
+    Name = Jenkins-route-table2
   }
 }
 
@@ -83,7 +83,8 @@ resource "aws_eks_cluster" "example" {
   role_arn = aws_iam_role.example.arn
 
   vpc_config {
-    subnet_ids = data.aws_subnets.public.ids
+    subnet_ids         = [aws_subnet.public-subnet.id, aws_subnet.public-subnet2.id]
+    security_group_ids = [aws_security_group.security-group.id]
   }
 
   # Ensure that IAM Role permissions are created before and deleted after EKS Cluster handling.
