@@ -121,7 +121,7 @@ administrative password : sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 
 - Sonarqube works on Port 9000, so <Public_IP>:9000. username: admin, password: admin
 - Create SonarQube token : Click on Administration ,Give a name for token → and click on Generate Token
-``` squ_8754a9b3b443827f7e933db30f45a44fa362d1f8 ```
+
 - In the Sonarqube Dashboard, Create Webhook ``` url <http://public_ip:8080/sonarqube-webhook/>```
 - In jenkins dashbord add sonar server: name(soner-server), ``` url <http://public_ip:9000>```
 
