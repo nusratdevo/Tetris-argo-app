@@ -166,10 +166,11 @@ administrative password : sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 - AWS Credentials: kind(AWS Credentials), ID(aws-key)
 - Github Credentials: Create personal access token (classic), kind(username with password), ID(github)
 
-### step 7: Create EKS Cluster with Jenkins Pipeline
+### step 7: Create EKS Cluster with terraform In parameterize pipline
 - create new item with pipline name
-- Navigate to Pipeline section. Give Github URL of your project.Then the credentials you created for github. afterthat the path of the jenkinsfile.
-- Click on Apply and then build.
+- Navigate to Pipeline section. Check This build is parameterize
+- name (action), parameter (apply, destroy)->save
+- Click on build with parameter Apply.
 Image: 
 
 ## step 8: build jenkins pipline to build and push the Docker image.
