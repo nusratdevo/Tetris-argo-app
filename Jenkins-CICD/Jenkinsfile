@@ -1,63 +1,116 @@
-pipeline{
-    agent any
-    tools{
-        jdk 'jdk17'
-        terraform 'terraform'
+pipeline {
+    agent any 
+    tools {
+        jdk 'jdk'
+        nodejs 'nodejs'
     }
-    stages{
-        stage('clean Workspace'){
-            steps{
+    environment  {
+        SCANNER_HOME=tool 'sonar-scanner'
+    }
+    stages {
+        stage('Cleaning Workspace') {
+            steps {
                 cleanWs()
             }
         }
-        stage('checkout from Git'){
-            steps{
-                git branch: 'main', url: 'https://github.com/Aj7Ay/TERRAFORM-JENKINS-CICD.git'
-            }
-        }
-        stage('Terraform version'){
-             steps{
-                 sh 'terraform --version'
-                }
-        }
-        stage("Sonarqube Analysis "){
-            steps{
-                withSonarQubeEnv('sonar-server') {
-                    sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Terraform \
-                    -Dsonar.projectKey=Terraform '''
-                }
-            }
-        }
-        stage("quality gate"){
-           steps {
-                script {
-                    waitForQualityGate abortPipeline: false, credentialsId: 'Sonar-token' 
-                }
-            } 
-        }
-        stage('TRIVY FS SCAN') {
+        stage('Checkout from Git') {
             steps {
-                sh "trivy fs . > trivyfs.txt"
+                git branch: 'main', url: 'https://github.com/nusratdevo/Tetris-argo-app.git'
             }
         }
-        stage('Excutable permission to userdata'){
-            steps{
-                sh 'chmod 777 website.sh'
+        stage('Sonarqube Analysis') {
+            steps {
+                    withSonarQubeEnv('sonar-server') {
+                        sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=TetrisVersion1.0 \
+                        -Dsonar.projectKey=TetrisVersion1.0 '''
+                    }
+                }
+            }
+        
+        stage('Quality Check') {
+            steps {
+                script {
+                    waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token' 
+                }
             }
         }
-        stage('Terraform init'){
-            steps{
-                sh 'terraform init'
+        stage('Installing Dependencies') {
+            steps {
+                
+                    sh 'npm install'
+                
             }
         }
-        stage('Terraform plan'){
-            steps{
-                sh 'terraform plan'
+        stage('OWASP Dependency-Check Scan') {
+            steps {
+                
+                    dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
+                    dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+                
             }
         }
-        stage('Terraform apply'){
-            steps{
-                sh 'terraform ${action} --auto approve'
+        stage('Trivy File Scan') {
+            steps {
+               
+                    sh 'trivy fs . > trivyfs.txt'
+                
+            }
+        }
+        stage("Docker Image Build") {
+            steps {
+                script {
+                    
+                        withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {   
+                            sh 'docker system prune -f'
+                            sh 'docker container prune -f'
+                            sh 'docker build -t tetrisv1 .'
+                        
+                    }
+                }
+            }
+        }
+        stage("Docker Image Pushing") {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {   
+                        sh 'docker tag tetrisv1 nusratdev/tetrisv1:${BUILD_NUMBER}'
+                        sh 'docker push nusratdev/tetrisv1:${BUILD_NUMBER}'
+                    }
+                }
+            }
+        }
+        stage("TRIVY Image Scan") {
+            steps {
+                sh 'trivy image nusratdev/tetrisv1:${BUILD_NUMBER} > trivyimage.txt' 
+            }
+        }
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main', url: 'https://github.com/nusratdev/Tetris-argo-app.git'
+            }
+        }
+        stage('Update Deployment file') {
+            environment {
+                GIT_REPO_NAME = "Tetris-argo-app"
+                GIT_USER_NAME = "nusratdev"
+            }
+            steps {
+                dir('manifest-file') {
+                    withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
+                        sh '''
+                            git config user.email "nusratdevo@gmail.com"
+                            git config user.name "nusratdevo"
+                            BUILD_NUMBER=${BUILD_NUMBER}
+                            echo $BUILD_NUMBER
+                            imageTag=$(grep -oP '(?<=tetrisv1:)[^ ]+' deployment.yml)
+                            echo $imageTag
+                            sed -i "s/tetrisv1:${imageTag}/tetrisv1:${BUILD_NUMBER}/" deployment.yml
+                            git add deployment.yml
+                            git commit -m "Update deployment Image to version \${BUILD_NUMBER}"
+                            git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
+                        '''
+                    }
+                }
             }
         }
     }
