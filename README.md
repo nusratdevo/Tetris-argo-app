@@ -151,21 +151,21 @@ Image:
  ii. then Git
  iii. Github Credentials
  iv. repository Branch :main
- v. Script path: Jenkins-Pipeline-Code/Jenkinsfile-Reddit
+ v. Script path: Jenkins-CICD/Jenkinsfile
  vi. Discard old build(check), builds keep 2
 ```
 - Deploy application on docker container add this stage to pipeline
 ```shell
  stage('Deploy to container'){
             steps{
-                sh 'docker run -d --name reddit -p 3000:3000 pardeepkaur/reddit:latest'}
+                sh 'docker run -d --name tetris -p 3000:3000 nusratdevo/tetrisvi:latest'}
         }
 ```
 
 
 ### step 9:  Configure EKS in jenkins:
 - Update the config of created EKS Cluster on local PC.It will Generate an Kubernetes configuration file
-``` aws eks update-kubeconfig --name Reddit-EKS-Cluster ```
+``` aws eks update-kubeconfig --name <EKS-Cluster-name> ```
 - Here is the path for config file.
 ```shell
 cd .kube
@@ -181,7 +181,6 @@ stage('Deploy to kubernets'){
                     withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'k8s', namespace: '', restrictKubeConfigAccess: false, serverUrl: '') {
                        sh 'kubectl apply -f deployment.yml'
                        sh 'kubectl apply -f service.yml'
-                       sh 'kubectl apply -f ingress.yml'
                   }
                 }
             }
@@ -242,7 +241,7 @@ image
 ``` shell
 project: default
 source:
-  repoURL: 'https://github.com/uniquesreedhar/Reddit-Project.git'
+  repoURL: 'https://github.com/nusratdevo/Tetris-argo-app.git'
   path: K8s/
   targetRevision: HEAD
 destination:
