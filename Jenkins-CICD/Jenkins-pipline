@@ -1,0 +1,53 @@
+pipeline {
+    agent any 
+    tools {
+        jdk 'jdk17'
+        nodejs 'nodejs'
+    }
+    stages {
+        stage('Cleaning Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+        stage('Checkout from Git') {
+            steps {
+                git branch: 'main', url: 'https://github.com/nusratdevo/Tetris-argo-app.git'
+            }
+        }
+
+        stage("Docker Image Build") {
+            steps {
+                script {
+                    
+                        withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {   
+                            sh 'docker system prune -f'
+                            sh 'docker container prune -f'
+                            sh 'docker build -t tetrisv2 .'
+                        
+                    }
+                }
+            }
+        }
+            stage("Docker Image Pushing") {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {   
+                        sh 'docker tag tetrisv2 nusratdev/tetrisv2:${BUILD_NUMBER}'
+                        sh 'docker push nusratdev/tetrisv2:${BUILD_NUMBER}'
+                    }
+                }
+            }
+        }
+        stage("Deploy to container") {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {   
+                        sh 'docker run -d --name tetris -p 3000:3000 nusratdev/tetrisv2:${BUILD_NUMBER}'
+                    }
+                }
+            }
+        }
+
+    }
+}
