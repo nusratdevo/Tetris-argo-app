@@ -23,6 +23,7 @@ pipeline {
                         withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {   
                             sh 'docker system prune -f'
                             sh 'docker container prune -f'
+                            sh 'docker system prune -a'
                             sh 'docker build -t tetrisv2 .'
                         
                     }
@@ -42,8 +43,38 @@ pipeline {
         stage("Deploy to container") {
             steps {
                 script {
-                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {   
+                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker') { 
+                        sh 'docker ps -a'
                         sh 'docker run -d --name tetris -p 3000:3000 nusratdev/tetrisv2:${BUILD_NUMBER}'
+                    }
+                }
+            }
+        }
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main', url: 'https://github.com/nusratdevo/Tetris-argo-app.git'
+            }
+        }
+        stage('Update Deployment file') {
+            environment {
+                GIT_REPO_NAME = "Tetris-argo-app"
+                GIT_USER_NAME = "nusratdevo"
+            }
+            steps {
+                dir('menifest-file') {
+                    withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
+                        sh '''
+                            git config user.email "nusratdevo@gmail.com"
+                            git config user.name "nusratdevo"
+                            BUILD_NUMBER=${BUILD_NUMBER}
+                            echo $BUILD_NUMBER
+                            imageTag=$(grep -oP '(?<=tetrisv2:)[^ ]+' deployment.yml)
+                            echo $imageTag
+                            sed -i "s/tetrisv2:${imageTag}/tetrisv2:${BUILD_NUMBER}/" deployment.yml
+                            git add deployment.yml
+                            git commit -m "Update deployment Image to version \${BUILD_NUMBER}"
+                            git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
+                        '''
                     }
                 }
             }
