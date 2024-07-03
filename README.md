@@ -4,47 +4,7 @@ GitOps, a set of practices for managing and automating IT infrastructure and sof
 
 ![tetris-main.png](images/tetris-main.png)
 ---
-# Image updater stage
-```
- environment {
-    GIT_REPO_NAME = "Tetris-argo-app"
-    GIT_USER_NAME = "nusratdevo"
-  }
-    stage('Checkout Code') {
-      steps {
-        git branch: 'main', url: 'https://github.com/nusratdevo/Tetris-argo-app.git'
-      }
-    }
 
-       stage('Update Deployment file') {
-            environment {
-                GIT_REPO_NAME = "Tetris-argo-app"
-                GIT_USER_NAME = "nusratdevo"
-            }
-            steps {
-                dir('manifest-file') {
-                    withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
-                        sh '''
-                            git config user.email "nusratdevo@gmail.com"
-                            git config user.name "nusratdevo"
-                            BUILD_NUMBER=${BUILD_NUMBER}
-                            echo $BUILD_NUMBER
-                            imageTag=$(grep -oP '(?<=tetrisv1:)[^ ]+' deployment.yml)
-                            echo $imageTag
-                            sed -i "s/tetrisv1:${imageTag}/tetrisv1:${BUILD_NUMBER}/" deployment.yml
-                            git add deployment.yml
-                            git commit -m "Update deployment Image to version \${BUILD_NUMBER}"
-                            git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
-                        '''
-                    }
-                }
-            }
-        }
-
-```
-
-![teris-pipline.PNG](images/teris-pipline.PNG)
----
 ## Tools Used:
 
 - AWS Account
@@ -202,30 +162,47 @@ Image:
 ---
 
 ### step 9:  Configure EKS in jenkins:
-- Update the config of created EKS Cluster on local PC.It will Generate an Kubernetes configuration file
-``` aws eks update-kubeconfig --name <EKS-Cluster-name> ```
-- Here is the path for config file.
+# Image updater stage
 ```shell
-cd .kube
-cat config
-```
-- copy the file that content and save in a local file with any name as EKS-SECRET file.
-- goto manage jenkins->credentials->system->global credentails: kind (Secret file) and ID (k8s)
-- Add Stage in Jenkins pipeline to deploy Kubernetes cluster.
-```shell 
-stage('Deploy to kubernets'){
-            steps{
-                script{
-                    withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'k8s', namespace: '', restrictKubeConfigAccess: false, serverUrl: '') {
-                       sh 'kubectl apply -f deployment.yml'
-                       sh 'kubectl apply -f service.yml'
-                  }
+ environment {
+    GIT_REPO_NAME = "Tetris-argo-app"
+    GIT_USER_NAME = "nusratdevo"
+  }
+    stage('Checkout Code') {
+      steps {
+        git branch: 'main', url: 'https://github.com/nusratdevo/Tetris-argo-app.git'
+      }
+    }
+
+       stage('Update Deployment file') {
+            environment {
+                GIT_REPO_NAME = "Tetris-argo-app"
+                GIT_USER_NAME = "nusratdevo"
+            }
+            steps {
+                dir('manifest-file') {
+                    withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
+                        sh '''
+                            git config user.email "nusratdevo@gmail.com"
+                            git config user.name "nusratdevo"
+                            BUILD_NUMBER=${BUILD_NUMBER}
+                            echo $BUILD_NUMBER
+                            imageTag=$(grep -oP '(?<=tetrisv1:)[^ ]+' deployment.yml)
+                            echo $imageTag
+                            sed -i "s/tetrisv1:${imageTag}/tetrisv1:${BUILD_NUMBER}/" deployment.yml
+                            git add deployment.yml
+                            git commit -m "Update deployment Image to version \${BUILD_NUMBER}"
+                            git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
+                        '''
+                    }
                 }
             }
         }
+
 ```
-- Access Aplication from aws loadbalancer DNS name url or rwite command ``` kubectl get nodes```
-- In cluster's node's SG inbound rule add 31148 port. so open port 31148 in eks cluster sg
+
+![teris-pipline.PNG](images/teris-pipline.PNG)
+---
 ### Step 10: add Email to jenkins 
 - Go to gmail account-> manage your google account->security->app passwords (generate a password that will add to jenkins credentials)
 
