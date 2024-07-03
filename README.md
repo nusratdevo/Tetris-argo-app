@@ -1,4 +1,9 @@
-# React Tetris App  
+# React Tetris App :Step-by-Step Guide to Deploying Tetris app on AWS EKS with Argo CD and GitOps
+In this guide, we will demonstrate the deployment of a Tetris game using AWS Elastic Kubernetes Service (EKS), Argo CD, and the principles of GitOps.
+GitOps, a set of practices for managing and automating IT infrastructure and software delivery processes, leverages Git as the single source of truth for declarative infrastructure and applications. This approach is particularly efficient for Kubernetes applications because it emphasizes version control and automated deployments.
+
+![tetris-main.png](images/tetris-main.png)
+---
 # Image updater stage
 ```
  environment {
@@ -37,6 +42,9 @@
         }
 
 ```
+
+![teris-pipline.PNG](images/teris-pipline.PNG)
+---
 ## Tools Used:
 
 - AWS Account
@@ -87,15 +95,21 @@ kubectl version --client --short
 Open jenkins on port <EC2 Public_IP>:8080
 administrative password : sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 ```
-
+![jenkis-dashbord.PNG](images/jenkis-dashbord.PNG)
+---
 ### Step 5: Sonar server configuration
 
 - Sonarqube works on Port 9000, so <Public_IP>:9000. username: admin, password: admin
+![Screen-(4).png](images/Screen-(4).png)
+---
 - Create SonarQube token : Click on Administration ,Give a name for token → and click on Generate Token
-
 - In the Sonarqube Dashboard, Create Webhook ``` url <http://public_ip:8080/sonarqube-webhook/>```
+![Screen-(5).png](images/Screen-(5).png)
+---
 - In jenkins dashbord add sonar server: name(soner-server), ``` url <http://public_ip:9000>```
 
+![Screen-(16).png](images/Screen-(16).png)
+---
 ### step 6: Set up Jenkins Plugins:
 
 - Goto Jenkins Dashboard → Manage Jenkins → Plugins → Available Plugins
@@ -118,22 +132,42 @@ administrative password : sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 * Kubernetes Client API
 * Kubernetes Pipeline DevOps steps
 
+![plugins.PNG](images/plugins.PNG)
+
 ### step 5: Set up Jenkins Tools Configuration:
 
 - Goto Jenkins Dashboard → Manage Jenkins → Tools
 
 * JDK Installations (Install from adomptium.net), Name (jdk17)
+
+![jdk17-tool.PNG](images/jdk17-tool.PNG)
+---
 * SonarQube Scanner Installations(Install from Maven Central),Name (sonar-scanner)
+![Screen-(10).png](images/Screen-(10).png)
+---
 * NodeJs   Installations (Install from nodejs.org) Name(nodejs)
 * Dependency-Check Installations (Install from github.com) Name(DP-Check)
+![Screen-(11).png](images/Screen-(11).png)
+---
 * Docker Installation (Download from docker.com) Name(docker)
+
+![Screen-(12).png](images/Screen-(12).png)
+---
 * Terraform Installations (install directory /usr/bin) Name(terraform)
+
 
 ### step 6: Set up credentials:
 
 - Goto Dashboard → Manage Jenkins → Credentials → system → Global credentials (unrestricted)→ Add Credentials
 - kind(username with password)->username(dockerhub username)->password(dockerhub pass)->Id(dockerHub)
+
+![Screen-(14).png](images/Screen-(14).png)
+---
 - setup credentials: dockerhub, sonar-token
+![Screen-(13).png](images/Screen-(13).png)
+---
+
+![Screen-(15).png](images/Screen-(15).png)
 - AWS Credentials: kind(AWS Credentials), ID(aws-key)
 - Github Credentials: Create personal access token (classic), kind(username with password), ID(github)
 
@@ -154,6 +188,9 @@ Image:
  v. Script path: Jenkins-CICD/Jenkinsfile
  vi. Discard old build(check), builds keep 2
 ```
+
+![tetris-app-deploy.PNG](images/tetris-app-deploy.PNG)
+--
 - Deploy application on docker container add this stage to pipeline
 ```shell
  stage('Deploy to container'){
@@ -161,7 +198,7 @@ Image:
                 sh 'docker run -d --name tetris -p 3000:3000 nusratdevo/tetrisvi:latest'}
         }
 ```
-
+![Screen-(31).png](images/Screen-(31).png)
 
 ### step 9:  Configure EKS in jenkins:
 - Update the config of created EKS Cluster on local PC.It will Generate an Kubernetes configuration file
@@ -236,7 +273,9 @@ echo ARGOCD_SERVER
 echo ARGOCD_PWD
 ```
 -Paste the DNS name of loadbalancer on browser
-image
+- image: 
+![argo-home.webp](images/argo-home.webp)
+
 - By create app by clicking on edit as yaml.
 ``` shell
 project: default
@@ -253,6 +292,11 @@ syncPolicy:
     selfHeal: true
   ```  
 - Check if all are up and running and Copy the DNS name and paste it browser.
+![Screen-(28).png](images/Screen-(28).png)
+---
+![Screen-(30).png](images/Screen-(30).png)
+---
+![Screen-(31).png](images/Screen-(31).png)
 ```shell
 kubectl get all
 kubectl get svc
