@@ -188,9 +188,9 @@ Image:
  v. Script path: Jenkins-CICD/Jenkinsfile
  vi. Discard old build(check), builds keep 2
 ```
+![tetris-jenkins-build.PNG](images/tetris-jenkins-build.PNG)
 
-![tetris-app-deploy.PNG](images/tetris-app-deploy.PNG)
---
+---
 - Deploy application on docker container add this stage to pipeline
 ```shell
  stage('Deploy to container'){
@@ -198,7 +198,8 @@ Image:
                 sh 'docker run -d --name tetris -p 3000:3000 nusratdevo/tetrisvi:latest'}
         }
 ```
-![Screen-(31).png](images/Screen-(31).png)
+![tetris-app-deploy.PNG](images/tetris-app-deploy.PNG)
+---
 
 ### step 9:  Configure EKS in jenkins:
 - Update the config of created EKS Cluster on local PC.It will Generate an Kubernetes configuration file
